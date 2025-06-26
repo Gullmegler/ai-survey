@@ -6,7 +6,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "postinstall": "tailwindcss init -p"
   },
   "dependencies": {
     "react": "^18.0.0",
