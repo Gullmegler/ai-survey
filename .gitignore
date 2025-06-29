@@ -13,13 +13,8 @@
 .env.test.local
 .env.production.local
 
-# tailwind
-postcss.config.js
-tailwind.config.js
-
 # logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
