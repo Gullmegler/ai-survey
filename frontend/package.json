@@ -4,7 +4,7 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "start": "craco start",
+    "start": "serve -s build",
     "build": "craco build"
   },
   "dependencies": {
