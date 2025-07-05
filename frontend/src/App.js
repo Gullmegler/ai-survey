@@ -5,27 +5,13 @@ import Footer from "./components/Footer";
 
 function App() {
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3000");
+    if (process.env.NODE_ENV === "development") {
+      const ws = new WebSocket("ws://localhost:3000");
 
-    ws.onopen = () => {
-      console.log("WebSocket-forbindelse åpnet");
-    };
-
-    ws.onmessage = (event) => {
-      console.log("Melding mottatt:", event.data);
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket-feil:", error);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket-forbindelse lukket");
-    };
-
-    return () => {
-      ws.close();
-    };
+      return () => {
+        ws.close();
+      };
+    }
   }, []);
 
   return (
