@@ -5,6 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "serve -s build",
+    "start": "serve -s builde",
+ 2986370c (Fix: Bruk serve for prod, behold craco start lokalt)
     "build": "craco build"
   },
   "dependencies": {
