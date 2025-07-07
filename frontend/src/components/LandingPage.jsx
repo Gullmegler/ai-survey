@@ -1,4 +1,5 @@
 import React from "react";
+import UploadSection from "./UploadSection";
 
 export default function LandingPage() {
   return (
@@ -10,12 +11,22 @@ export default function LandingPage() {
         Submit your moving video and receive a tailored quote powered by our AI.
         No home visit needed.
       </p>
-      <a
-        href="https://aisurvey.airemovals.co.uk/#upload"
+      <button
+        onClick={() => {
+          const uploadEl = document.getElementById("upload-section");
+          if (uploadEl) {
+            uploadEl.scrollIntoView({ behavior: "smooth" });
+          }
+        }}
         className="inline-block bg-orange-500 text-white px-6 py-3 rounded hover:bg-orange-600 transition"
       >
         Start Free Survey
-      </a>
+      </button>
+
+      {/* Upload section */}
+      <div id="upload-section" className="mt-12">
+        <UploadSection />
+      </div>
     </section>
   );
 }
