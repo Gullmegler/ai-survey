@@ -43,7 +43,7 @@ export default function UploadSection() {
     }
   };
 
-  // Telle antall per klasse
+  // Tell antall per klasse
   const classCounts = {};
   results.forEach((pred) => {
     if (classCounts[pred.class]) {
