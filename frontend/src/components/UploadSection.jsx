@@ -27,16 +27,24 @@ export default function AIMovingEstimator() {
     setError(null);
 
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('file', file); // Roboflow krever "file" som nøkkel
 
     try {
-      const response = await axios.post(
-        'http://localhost:8080/api/analyze',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      setResult(response.data);
-      calculateSuppliesAndSummary(response.data.objects || []);
+      const response = await axios({
+        method: 'POST',
+        url: 'https://detect.roboflow.com/ai-removals-roboflow/2',
+        params: {
+          api_key: 'o3WdaTWO4nd5tH71DoXz',
+        },
+        data: formData,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const predictions = response.data.predictions || [];
+      const objects = predictions.map((p) => p.class); // F.eks. ['sofa', 'table']
+
+      setResult({ objects });
+      calculateSuppliesAndSummary(objects);
     } catch (err) {
       console.error(err);
       setError('Noe gikk galt under analysen.');
