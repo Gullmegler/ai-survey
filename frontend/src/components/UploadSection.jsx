@@ -1,108 +1,152 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
-export default function UploadSection() {
+export default function AIMovingEstimator() {
   const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [results, setResults] = useState([]);
-  const [error, setError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-      setResults([]);
-      setError("");
-    }
+  const [supplies, setSupplies] = useState([]);
+  const [summary, setSummary] = useState({ cubicFeet: 0, weight: 0, truckSize: '' });
+
+  const handleFileChange = (event) => {
+    const uploadedFile = event.target.files[0];
+    setFile(uploadedFile);
+    setPreviewUrl(URL.createObjectURL(uploadedFile));
+    setResult(null);
+    setError(null);
   };
 
-  const handleAnalyze = async () => {
+  const handleSubmit = async () => {
     if (!file) return;
+    setLoading(true);
+    setError(null);
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('image', file);
 
     try {
-      const response = await axios({
-        method: "POST",
-        url: "https://detect.roboflow.com/ai-removals-roboflow/2",
-        params: {
-          api_key: "YOUR_API_KEY", // Sett din egen API-nøkkel her
-        },
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      setResults(response.data.predictions || []);
+      const response = await axios.post(
+        'https://mitt-prosjekt-production.up.railway.app/api/analyze',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      setResult(response.data);
+      calculateSuppliesAndSummary(response.data.objects || []);
     } catch (err) {
-      setError("Error analyzing image");
       console.error(err);
+      setError('Noe gikk galt under analysen.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Tell antall per klasse
-  const classCounts = {};
-  results.forEach((pred) => {
-    if (classCounts[pred.class]) {
-      classCounts[pred.class]++;
-    } else {
-      classCounts[pred.class] = 1;
-    }
-  });
+  const calculateSuppliesAndSummary = (items) => {
+    let volume = 0;
+    let weight = 0;
+    let supplyList = [];
+
+    items.forEach((item) => {
+      switch (item.toLowerCase()) {
+        case 'grand-piano':
+          volume += 90;
+          weight += 500;
+          supplyList.push('2 flyttetepper', '1 stroppesett');
+          break;
+        case 'piano-chair':
+          volume += 15;
+          weight += 40;
+          supplyList.push('1 mellomstor eske');
+          break;
+        case 'ceiling-lamp':
+          volume += 5;
+          weight += 10;
+          supplyList.push('boblekonvolutt', 'skuminnlegg');
+          break;
+        default:
+          break;
+      }
+    });
+
+    const truckSize = volume > 100 ? '16 ft truck' : '12 ft van';
+    setSupplies(supplyList);
+    setSummary({ cubicFeet: volume, weight, truckSize });
+  };
+
+  const downloadPDF = () => {
+    alert('PDF-generering med AI Removals branding kommer her.');
+  };
+
+  const addToCRM = () => {
+    fetch('https://crm.airemovals.co.uk/api/add-job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: result?.objects, summary }),
+    })
+      .then((res) => res.json())
+      .then(() => alert('Lagret i CRM!'))
+      .catch(() => alert('Feil ved CRM-integrasjon'));
+  };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <input type="file" onChange={handleFileChange} />
+    <div className="p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <div className="space-x-2">
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Analyserer...' : 'Analyze'}
+          </Button>
+          <Button onClick={downloadPDF}>Download PDF</Button>
+          <Button onClick={addToCRM}>Add to CRM</Button>
+        </div>
+      </div>
+
       {previewUrl && (
-        <div className="relative mt-4 flex justify-center">
-          <img src={previewUrl} alt="Preview" className="max-w-full h-auto" />
-          {results.map((pred, index) => (
-            <div
-              key={index}
-              style={{
-                position: "absolute",
-                left: `${pred.x - pred.width / 2}px`,
-                top: `${pred.y - pred.height / 2}px`,
-                width: `${pred.width}px`,
-                height: `${pred.height}px`,
-                border: "2px solid orange",
-                color: "orange",
-                fontSize: "12px",
-                fontWeight: "bold",
-                background: "rgba(255, 165, 0, 0.2)",
-              }}
-            >
-              {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
-            </div>
-          ))}
-        </div>
-      )}
-      {file && (
-        <button
-          onClick={handleAnalyze}
-          className="mt-4 px-4 py-2 bg-orange-500 text-white rounded"
-        >
-          Analyze
-        </button>
-      )}
-
-      {Object.keys(classCounts).length > 0 && (
-        <div className="mt-6 text-center">
-          <h2 className="font-bold mb-2">Detected items:</h2>
-          <ul className="list-disc list-inside">
-            {Object.entries(classCounts).map(([className, count], index) => (
-              <li key={index}>
-                <strong>{className}</strong> — {count} stk
-              </li>
-            ))}
-          </ul>
+        <div className="border rounded overflow-hidden max-w-md">
+          <img src={previewUrl} alt="Preview" className="w-full object-contain" />
         </div>
       )}
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {result && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent>
+              <h2 className="text-lg font-bold mb-2">Detected Items</h2>
+              <ul className="list-disc list-inside">
+                {result.objects?.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <h2 className="text-lg font-bold mb-2">Supply Items</h2>
+              <ul className="list-disc list-inside">
+                {supplies.map((s, idx) => (
+                  <li key={idx}>{s}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <h2 className="text-lg font-bold mb-2">Summary</h2>
+              <p><strong>Cubic Feet:</strong> {summary.cubicFeet}</p>
+              <p><strong>Weight (lb):</strong> {summary.weight}</p>
+              <p><strong>Truck Size:</strong> {summary.truckSize}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }
