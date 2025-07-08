@@ -42,9 +42,10 @@ export default function UploadSection() {
     }
   };
 
-  // Tell antall per klasse
-  const countPerClass = predictions.reduce((acc, pred) => {
-    acc[pred.class] = (acc[pred.class] || 0) + 1;
+  // Gruppér predictions per klasse
+  const grouped = predictions.reduce((acc, pred) => {
+    if (!acc[pred.class]) acc[pred.class] = [];
+    acc[pred.class].push(pred);
     return acc;
   }, {});
 
@@ -85,9 +86,13 @@ export default function UploadSection() {
         <div className="mt-4 text-left">
           <h3 className="font-bold">Detected items:</h3>
           <ul>
-            {Object.entries(countPerClass).map(([cls, count], index) => (
+            {Object.entries(grouped).map(([cls, preds], index) => (
               <li key={index}>
-                <strong>{cls}</strong> — {count} stk
+                <strong>{cls}</strong> — {preds.length} stk (
+                {preds
+                  .map((p) => `${(p.confidence * 100).toFixed(1)}%`)
+                  .join(", ")}
+                )
               </li>
             ))}
           </ul>
@@ -97,3 +102,4 @@ export default function UploadSection() {
     </div>
   );
 }
+
