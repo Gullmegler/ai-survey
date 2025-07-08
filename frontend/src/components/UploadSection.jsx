@@ -31,7 +31,7 @@ export default function AIMovingEstimator() {
 
     try {
       const response = await axios.post(
-        'https://mitt-prosjekt-production.up.railway.app/api/analyze',
+        'http://localhost:8080/api/analyze',
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -68,6 +68,7 @@ export default function AIMovingEstimator() {
           supplyList.push('boblekonvolutt', 'skuminnlegg');
           break;
         default:
+          supplyList.push('Standard eske');
           break;
       }
     });
