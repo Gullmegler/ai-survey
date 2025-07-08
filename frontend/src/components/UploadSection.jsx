@@ -31,53 +31,50 @@ export default function UploadSection() {
           api_key: "o3WdaTWO4nd5tH71DoXz",
         },
         data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       });
 
-      setResults(response.data);
+      setResults(response.data.predictions);
     } catch (err) {
+      setError("Failed to analyze image");
       console.error(err);
-      setError("Error analyzing image.");
     }
   };
 
-  // Gruppér predictions etter class
-  const grouped = {};
-  if (results && results.predictions) {
-    results.predictions.forEach((pred) => {
-      if (!grouped[pred.class]) {
-        grouped[pred.class] = [];
+  // Tell classes
+  const classCounts = {};
+  if (results) {
+    results.forEach((pred) => {
+      if (classCounts[pred.class]) {
+        classCounts[pred.class]++;
+      } else {
+        classCounts[pred.class] = 1;
       }
-      grouped[pred.class].push(pred);
     });
   }
 
   return (
-    <div style={{ textAlign: "center" }}>
-      <h2>AI-Powered Moving Survey</h2>
-      <p>Submit your moving image and see detected items with counts!</p>
+    <div className="text-center">
       <input type="file" onChange={handleFileChange} />
-      <br />
       {previewUrl && (
-        <div style={{ position: "relative", display: "inline-block", marginTop: "10px" }}>
-          <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%" }} />
+        <div className="mt-4 flex justify-center relative">
+          <img src={previewUrl} alt="Preview" className="max-w-full h-auto" />
           {results &&
-            results.predictions.map((pred, index) => (
+            results.map((pred, idx) => (
               <div
-                key={index}
+                key={idx}
                 style={{
                   position: "absolute",
-                  left: pred.x - pred.width / 2,
-                  top: pred.y - pred.height / 2,
-                  width: pred.width,
-                  height: pred.height,
+                  left: `${pred.x - pred.width / 2}px`,
+                  top: `${pred.y - pred.height / 2}px`,
+                  width: `${pred.width}px`,
+                  height: `${pred.height}px`,
                   border: "2px solid orange",
                   color: "orange",
-                  fontWeight: "bold",
                   fontSize: "12px",
-                  backgroundColor: "rgba(0,0,0,0.5)",
+                  fontWeight: "bold",
+                  pointerEvents: "none",
+                  background: "rgba(0,0,0,0.3)",
+                  textAlign: "center",
                 }}
               >
                 {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
@@ -85,25 +82,27 @@ export default function UploadSection() {
             ))}
         </div>
       )}
-      <br />
-      <button onClick={handleAnalyze} style={{ marginTop: "10px", padding: "8px 20px" }}>
+      <button
+        onClick={handleAnalyze}
+        className="mt-4 bg-orange-500 text-white px-4 py-2 rounded"
+      >
         Analyze
       </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
       {results && (
-        <div style={{ textAlign: "left", maxWidth: "400px", margin: "20px auto" }}>
-          <h3>Detected items:</h3>
-          <ul>
-            {Object.entries(grouped).map(([cls, preds], index) => (
-              <li key={index}>
-                <strong>{cls}</strong> — {preds.length} stk
+        <div className="mt-6 text-left max-w-md mx-auto">
+          <h3 className="font-bold">Detected items:</h3>
+          <ul className="list-disc list-inside">
+            {Object.entries(classCounts).map(([className, count]) => (
+              <li key={className}>
+                <strong>{className}</strong> — {count} stk
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   );
 }
