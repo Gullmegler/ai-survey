@@ -31,65 +31,42 @@ export default function UploadSection() {
           api_key: "o3WdaTWO4nd5tH71DoXz",
         },
         data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setResults(response.data.predictions);
+      setResults(response.data);
       setError("");
     } catch (err) {
-      console.error(err);
+      console.error("Error during analysis:", err);
       setError("Noe gikk galt under analysen.");
-      setResults(null);
     }
   };
 
   return (
-    <div className="text-center mt-12">
-      <input type="file" accept="image/*,video/*" onChange={handleFileChange} />
+    <section className="text-center py-10">
+      <input type="file" onChange={handleFileChange} accept="image/*,video/*" />
       {previewUrl && (
-        <>
-          {file.type.startsWith("video/") ? (
-            <video
-              src={previewUrl}
-              controls
-              className="mx-auto mt-4 max-w-md rounded shadow"
-            />
+        <div className="mt-4">
+          {file.type.startsWith("video") ? (
+            <video src={previewUrl} controls className="mx-auto max-w-md" />
           ) : (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="mx-auto mt-4 max-w-md rounded shadow"
-            />
+            <img src={previewUrl} alt="Preview" className="mx-auto max-w-md" />
           )}
           <button
             onClick={handleAnalyze}
-            className="mt-4 bg-orange-500 text-white px-6 py-3 rounded hover:bg-orange-600 transition"
+            className="mt-4 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
           >
             Analyze
           </button>
-        </>
-      )}
-
-      {error && <p className="text-red-500 mt-4">{error}</p>}
-
-      {results && (
-        <div className="mt-8 text-left max-w-2xl mx-auto bg-gray-100 p-4 rounded">
-          <h3 className="font-bold mb-2">Detected Objects:</h3>
-          {results.length > 0 ? (
-            <ul>
-              {results.map((item, index) => (
-                <li key={index}>
-                  <strong>{item.class}</strong> (confidence: {(item.confidence * 100).toFixed(1)}%)
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Ingen objekter funnet.</p>
-          )}
         </div>
       )}
-    </div>
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {results && (
+        <pre className="text-left mt-4 bg-gray-100 p-4 rounded">
+          {JSON.stringify(results, null, 2)}
+        </pre>
+      )}
+    </section>
   );
 }
+
