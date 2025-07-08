@@ -4,7 +4,7 @@ import axios from "axios";
 export default function UploadSection() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [results, setResults] = useState(null);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
@@ -12,7 +12,7 @@ export default function UploadSection() {
     if (selectedFile) {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-      setResults(null);
+      setResults([]);
       setError("");
     }
   };
@@ -28,73 +28,73 @@ export default function UploadSection() {
         method: "POST",
         url: "https://detect.roboflow.com/ai-removals-roboflow/2",
         params: {
-          api_key: "o3WdaTWO4nd5tH71DoXz",
+          api_key: "YOUR_API_KEY", // Sett din egen API-nøkkel her
         },
         data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      setResults(response.data.predictions);
+      setResults(response.data.predictions || []);
     } catch (err) {
-      setError("Failed to analyze image");
+      setError("Error analyzing image");
       console.error(err);
     }
   };
 
-  // Tell classes
+  // Telle antall per klasse
   const classCounts = {};
-  if (results) {
-    results.forEach((pred) => {
-      if (classCounts[pred.class]) {
-        classCounts[pred.class]++;
-      } else {
-        classCounts[pred.class] = 1;
-      }
-    });
-  }
+  results.forEach((pred) => {
+    if (classCounts[pred.class]) {
+      classCounts[pred.class]++;
+    } else {
+      classCounts[pred.class] = 1;
+    }
+  });
 
   return (
-    <div className="text-center">
+    <div className="flex flex-col items-center w-full">
       <input type="file" onChange={handleFileChange} />
       {previewUrl && (
-        <div className="mt-4 flex justify-center relative">
+        <div className="relative mt-4 flex justify-center">
           <img src={previewUrl} alt="Preview" className="max-w-full h-auto" />
-          {results &&
-            results.map((pred, idx) => (
-              <div
-                key={idx}
-                style={{
-                  position: "absolute",
-                  left: `${pred.x - pred.width / 2}px`,
-                  top: `${pred.y - pred.height / 2}px`,
-                  width: `${pred.width}px`,
-                  height: `${pred.height}px`,
-                  border: "2px solid orange",
-                  color: "orange",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  pointerEvents: "none",
-                  background: "rgba(0,0,0,0.3)",
-                  textAlign: "center",
-                }}
-              >
-                {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
-              </div>
-            ))}
+          {results.map((pred, index) => (
+            <div
+              key={index}
+              style={{
+                position: "absolute",
+                left: `${pred.x - pred.width / 2}px`,
+                top: `${pred.y - pred.height / 2}px`,
+                width: `${pred.width}px`,
+                height: `${pred.height}px`,
+                border: "2px solid orange",
+                color: "orange",
+                fontSize: "12px",
+                fontWeight: "bold",
+                background: "rgba(255, 165, 0, 0.2)",
+              }}
+            >
+              {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
+            </div>
+          ))}
         </div>
       )}
-      <button
-        onClick={handleAnalyze}
-        className="mt-4 bg-orange-500 text-white px-4 py-2 rounded"
-      >
-        Analyze
-      </button>
+      {file && (
+        <button
+          onClick={handleAnalyze}
+          className="mt-4 px-4 py-2 bg-orange-500 text-white rounded"
+        >
+          Analyze
+        </button>
+      )}
 
-      {results && (
-        <div className="mt-6 text-left max-w-md mx-auto">
-          <h3 className="font-bold">Detected items:</h3>
+      {Object.keys(classCounts).length > 0 && (
+        <div className="mt-6 text-center">
+          <h2 className="font-bold mb-2">Detected items:</h2>
           <ul className="list-disc list-inside">
-            {Object.entries(classCounts).map(([className, count]) => (
-              <li key={className}>
+            {Object.entries(classCounts).map(([className, count], index) => (
+              <li key={index}>
                 <strong>{className}</strong> — {count} stk
               </li>
             ))}
