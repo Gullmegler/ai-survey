@@ -1,105 +1,95 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
 
-function UploadSection() {
+export default function UploadSection() {
   const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [results, setResults] = useState(null);
+  const [error, setError] = useState("");
 
-  const handleFileChange = (event) => {
-    const uploadedFile = event.target.files[0];
-    setFile(uploadedFile);
-    setPreviewUrl(URL.createObjectURL(uploadedFile));
-    setResult(null);
-    setError(null);
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+      setResults(null);
+      setError("");
+    }
   };
 
-  const handleSubmit = async () => {
+  const handleAnalyze = async () => {
     if (!file) return;
-    setLoading(true);
-    setError(null);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const response = await axios.post(
-        'https://aisurvey-backend-production.up.railway.app/analyze', // ← oppdater med Railway-backend
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      setResult(response.data);
+      const response = await axios({
+        method: "POST",
+        url: "https://detect.roboflow.com/ai-removals-roboflow/2",
+        params: {
+          api_key: "o3WdaTWO4nd5tH71DoXz",
+        },
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      // 💬 Her kan du eventuelt kalle CRM-API hvis du vil gjøre det fra frontend
-      // f.eks.
-      // await axios.post('https://crm.movevision.co.uk/api/surveys', { ...data });
+      setResults(response.data.predictions);
+      setError("");
     } catch (err) {
       console.error(err);
-      setError('Noe gikk galt under analysen.');
-    } finally {
-      setLoading(false);
+      setError("Noe gikk galt under analysen.");
+      setResults(null);
     }
   };
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <input
-        type="file"
-        accept="image/*,video/*"
-        onChange={handleFileChange}
-        className="block mb-4"
-      />
+    <div className="text-center mt-12">
+      <input type="file" accept="image/*,video/*" onChange={handleFileChange} />
       {previewUrl && (
-        <div className="mb-4">
-          <video
-            src={previewUrl}
-            controls
-            className="w-full max-h-64 object-contain border rounded"
-          />
-        </div>
+        <>
+          {file.type.startsWith("video/") ? (
+            <video
+              src={previewUrl}
+              controls
+              className="mx-auto mt-4 max-w-md rounded shadow"
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="mx-auto mt-4 max-w-md rounded shadow"
+            />
+          )}
+          <button
+            onClick={handleAnalyze}
+            className="mt-4 bg-orange-500 text-white px-6 py-3 rounded hover:bg-orange-600 transition"
+          >
+            Analyze
+          </button>
+        </>
       )}
-      <button
-        onClick={handleSubmit}
-        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-        disabled={loading}
-      >
-        {loading ? "Analyserer..." : "Analyze"}
-      </button>
 
       {error && <p className="text-red-500 mt-4">{error}</p>}
 
-      {result && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <h3 className="font-semibold text-lg">Detected Objects</h3>
-            <ul className="list-disc ml-5">
-              {result.objects?.map((item, i) => (
-                <li key={`obj-${i}`}>{item}</li>
+      {results && (
+        <div className="mt-8 text-left max-w-2xl mx-auto bg-gray-100 p-4 rounded">
+          <h3 className="font-bold mb-2">Detected Objects:</h3>
+          {results.length > 0 ? (
+            <ul>
+              {results.map((item, index) => (
+                <li key={index}>
+                  <strong>{item.class}</strong> (confidence: {(item.confidence * 100).toFixed(1)}%)
+                </li>
               ))}
             </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg">Detected Text</h3>
-            <ul className="list-disc ml-5">
-              {result.text?.map((item, i) => (
-                <li key={`text-${i}`}>{item}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg">Detected Logos</h3>
-            <ul className="list-disc ml-5">
-              {result.logos?.map((item, i) => (
-                <li key={`logo-${i}`}>{item}</li>
-              ))}
-            </ul>
-          </div>
+          ) : (
+            <p>Ingen objekter funnet.</p>
+          )}
         </div>
       )}
     </div>
   );
 }
-
-export default UploadSection;
