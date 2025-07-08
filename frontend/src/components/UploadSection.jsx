@@ -4,7 +4,7 @@ import axios from "axios";
 export default function UploadSection() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [predictions, setPredictions] = useState([]);
+  const [results, setResults] = useState(null);
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
@@ -12,7 +12,7 @@ export default function UploadSection() {
     if (selectedFile) {
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-      setPredictions([]);
+      setResults(null);
       setError("");
     }
   };
@@ -31,75 +31,79 @@ export default function UploadSection() {
           api_key: "o3WdaTWO4nd5tH71DoXz",
         },
         data: formData,
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      setPredictions(response.data.predictions);
-      setError("");
+      setResults(response.data);
     } catch (err) {
-      setError("Error during analysis");
       console.error(err);
+      setError("Error analyzing image.");
     }
   };
 
-  // Gruppér predictions per klasse
-  const grouped = predictions.reduce((acc, pred) => {
-    if (!acc[pred.class]) acc[pred.class] = [];
-    acc[pred.class].push(pred);
-    return acc;
-  }, {});
+  // Gruppér predictions etter class
+  const grouped = {};
+  if (results && results.predictions) {
+    results.predictions.forEach((pred) => {
+      if (!grouped[pred.class]) {
+        grouped[pred.class] = [];
+      }
+      grouped[pred.class].push(pred);
+    });
+  }
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <input type="file" accept="image/*,video/*" onChange={handleFileChange} />
+    <div style={{ textAlign: "center" }}>
+      <h2>AI-Powered Moving Survey</h2>
+      <p>Submit your moving image and see detected items with counts!</p>
+      <input type="file" onChange={handleFileChange} />
+      <br />
       {previewUrl && (
-        <div className="relative">
-          <img src={previewUrl} alt="Preview" className="max-w-full h-auto" />
-          {predictions.map((pred, index) => (
-            <div
-              key={index}
-              style={{
-                position: "absolute",
-                border: "2px solid orange",
-                left: pred.x - pred.width / 2,
-                top: pred.y - pred.height / 2,
-                width: pred.width,
-                height: pred.height,
-                color: "orange",
-                fontSize: "12px",
-                fontWeight: "bold",
-                background: "rgba(0,0,0,0.5)",
-              }}
-            >
-              {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
-            </div>
-          ))}
+        <div style={{ position: "relative", display: "inline-block", marginTop: "10px" }}>
+          <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%" }} />
+          {results &&
+            results.predictions.map((pred, index) => (
+              <div
+                key={index}
+                style={{
+                  position: "absolute",
+                  left: pred.x - pred.width / 2,
+                  top: pred.y - pred.height / 2,
+                  width: pred.width,
+                  height: pred.height,
+                  border: "2px solid orange",
+                  color: "orange",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                }}
+              >
+                {pred.class} ({(pred.confidence * 100).toFixed(1)}%)
+              </div>
+            ))}
         </div>
       )}
-      <button
-        onClick={handleAnalyze}
-        className="px-4 py-2 bg-orange-500 text-white rounded"
-      >
+      <br />
+      <button onClick={handleAnalyze} style={{ marginTop: "10px", padding: "8px 20px" }}>
         Analyze
       </button>
-      {predictions.length > 0 && (
-        <div className="mt-4 text-left">
-          <h3 className="font-bold">Detected items:</h3>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {results && (
+        <div style={{ textAlign: "left", maxWidth: "400px", margin: "20px auto" }}>
+          <h3>Detected items:</h3>
           <ul>
             {Object.entries(grouped).map(([cls, preds], index) => (
               <li key={index}>
-                <strong>{cls}</strong> — {preds.length} stk (
-                {preds
-                  .map((p) => `${(p.confidence * 100).toFixed(1)}%`)
-                  .join(", ")}
-                )
+                <strong>{cls}</strong> — {preds.length} stk
               </li>
             ))}
           </ul>
         </div>
       )}
-      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }
-
