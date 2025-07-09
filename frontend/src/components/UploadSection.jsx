@@ -34,8 +34,8 @@ export default function AIMovingEstimator() {
 
       const predictions = response.data.predictions || [];
       setResult(predictions);
-    } catch (error) {
-      console.error('Feil ved analyse:', error.message);
+    } catch (err) {
+      console.error('Feil under analyse:', err.message);
       setError('Failed to analyze image.');
     } finally {
       setLoading(false);
@@ -43,22 +43,24 @@ export default function AIMovingEstimator() {
   };
 
   return (
-    <div className="text-center">
+    <div style={{ textAlign: 'center', marginTop: '2rem' }}>
       <input type="file" onChange={handleFileChange} />
-      {previewUrl && <img src={previewUrl} alt="Preview" className="my-4 mx-auto max-w-md" />}
+      {previewUrl && (
+        <div style={{ marginTop: '1rem' }}>
+          <img src={previewUrl} alt="Preview" style={{ maxWidth: '100%', height: 'auto' }} />
+        </div>
+      )}
       <button
         onClick={handleSubmit}
-        className="bg-orange-500 text-white py-2 px-6 rounded hover:bg-orange-600"
-        disabled={loading}
+        style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', backgroundColor: '#f60', color: 'white', border: 'none', borderRadius: '4px' }}
       >
         {loading ? 'Analyzing...' : 'Analyze'}
       </button>
-
-      {error && <p className="text-red-500 mt-4">{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {result && (
-        <div className="mt-4">
-          <h3 className="font-semibold mb-2">Predictions:</h3>
-          <pre className="bg-gray-100 p-2 text-left rounded">{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: '1rem' }}>
+          <h4>Predictions:</h4>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>
