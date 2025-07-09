@@ -18,7 +18,12 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
-  const imagePath = req.file.path;
+  const imagePath = req.file?.path;
+
+  if (!imagePath) {
+    return res.status(400).json({ error: 'No image uploaded' });
+  }
+
   try {
     const base64Image = fs.readFileSync(imagePath, { encoding: 'base64' });
 
@@ -34,7 +39,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
     res.json(roboflowRes.data);
   } catch (error) {
-    console.error('Feil fra Roboflow:', error.message);
+    console.error('Error from Roboflow:', error.message);
     res.status(500).json({ error: 'Image analysis failed' });
   }
 });
