@@ -12,17 +12,21 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// Konfigurer multer til å lagre opplastede filer i "uploads" mappen
 const upload = multer({ dest: 'uploads/' });
 
-// Test-endepunkt
+// Test endpoint
 app.get('/', (req, res) => {
   res.send('AI Survey Backend is running');
 });
 
-// Analyse-endepunkt
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
-  const imagePath = req.file.path;
+  const imagePath = req.file?.path;
+
+  if (!imagePath) {
+    return res.status(400).json({ error: 'Image not provided or failed to upload.' });
+  }
+
+  console.log(`➡️ Fil mottatt: ${imagePath}`);
 
   const formData = new FormData();
   formData.append('file', fs.createReadStream(imagePath));
@@ -31,17 +35,32 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     const roboflowRes = await axios.post(
       'https://detect.roboflow.com/ai-removals-roboflow/2?api_key=3WdaTWO4nd5tH71DoXz',
       formData,
-      { headers: formData.getHeaders() }
+      {
+        headers: formData.getHeaders(),
+        timeout: 10000 // 10 sek timeout
+      }
     );
 
-    // Send JSON-resultatet tilbake til frontend eller curl
+    console.log('✅ Roboflow-response mottatt');
     res.json(roboflowRes.data);
   } catch (err) {
-    console.error("Roboflow-feil:", err.message);
-    res.status(500).json({ error: "Klarte ikke å analysere bildet." });
+    console.error('❌ Roboflow-anrop feilet:');
+    if (err.response) {
+      console.error('Status:', err.response.status);
+      console.error('Data:', err.response.data);
+      res.status(500).json({
+        error: 'Feil ved Roboflow-analyse',
+        status: err.response.status,
+        response: err.response.data
+      });
+    } else {
+      console.error('Feilmelding:', err.message);
+      res.status(500).json({ error: 'Intern serverfeil', details: err.message });
+    }
   }
 });
 
+// Start server
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
