@@ -9,7 +9,6 @@ export default function AIMovingEstimator() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
   const [supplies, setSupplies] = useState([]);
   const [summary, setSummary] = useState({ cubicFeet: 0, weight: 0, truckSize: '' });
 
@@ -27,27 +26,19 @@ export default function AIMovingEstimator() {
     setError(null);
 
     const formData = new FormData();
-    formData.append('file', file); // Roboflow krever "file" som nøkkel
+    formData.append('image', file); // multer expects "image" as key
 
     try {
-      const response = await axios({
-        method: 'POST',
-        url: 'https://detect.roboflow.com/ai-removals-roboflow/2',
-        params: {
-          api_key: 'o3WdaTWO4nd5tH71DoXz',
-        },
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await axios.post('http://localhost:8080/api/analyze', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      const predictions = response.data.predictions || [];
-      const objects = predictions.map((p) => p.class); // F.eks. ['sofa', 'table']
-
-      setResult({ objects });
-      calculateSuppliesAndSummary(objects);
+      setResult(response.data);
+      calculateSuppliesAndSummary(response.data.objects || []);
     } catch (err) {
-      console.error(err);
-      setError('Noe gikk galt under analysen.');
+      console.error('Frontend error:', err?.response?.data || err.message);
+      const msg = err?.response?.data?.error || err.message || 'Unknown error';
+      setError(`Feil: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -87,7 +78,7 @@ export default function AIMovingEstimator() {
   };
 
   const downloadPDF = () => {
-    alert('PDF-generering med AI Removals branding kommer her.');
+    alert('PDF-generering kommer senere.');
   };
 
   const addToCRM = () => {
