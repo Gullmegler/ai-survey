@@ -34,8 +34,8 @@ export default function AIMovingEstimator() {
 
       const predictions = response.data.predictions || [];
       setResult(predictions);
-    } catch (err) {
-      console.error('Feil ved analyse:', err.message);
+    } catch (error) {
+      console.error('Feil ved analyse:', error.message);
       setError('Failed to analyze image.');
     } finally {
       setLoading(false);
@@ -43,23 +43,22 @@ export default function AIMovingEstimator() {
   };
 
   return (
-    <div className="text-center mt-8">
-      <input type="file" onChange={handleFileChange} className="mb-4" />
-      {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto mb-4 max-w-md" />}
+    <div className="text-center">
+      <input type="file" onChange={handleFileChange} />
+      {previewUrl && <img src={previewUrl} alt="Preview" className="my-4 mx-auto max-w-md" />}
       <button
         onClick={handleSubmit}
+        className="bg-orange-500 text-white py-2 px-6 rounded hover:bg-orange-600"
         disabled={loading}
-        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
       >
         {loading ? 'Analyzing...' : 'Analyze'}
       </button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+
+      {error && <p className="text-red-500 mt-4">{error}</p>}
       {result && (
         <div className="mt-4">
-          <h3 className="text-lg font-semibold">Results:</h3>
-          <pre className="text-left bg-gray-100 p-2 mt-2 rounded">
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <h3 className="font-semibold mb-2">Predictions:</h3>
+          <pre className="bg-gray-100 p-2 text-left rounded">{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
     </div>
