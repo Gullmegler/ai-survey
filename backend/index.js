@@ -37,10 +37,10 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       }
     );
 
-    res.json(roboflowRes.data);
+    return res.json(roboflowRes.data);
   } catch (error) {
-    console.error('Error from Roboflow:', error.message);
-    res.status(500).json({ error: 'Image analysis failed' });
+    console.error('Roboflow error:', error.message);
+    return res.status(500).json({ error: 'Image analysis failed' });
   }
 });
 
