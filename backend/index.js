@@ -1,11 +1,10 @@
-require('dotenv').config(); // <- Legg til denne linjen først
-
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -21,13 +20,12 @@ app.get('/', (req, res) => {
 
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
   const imagePath = req.file.path;
+
   try {
     const base64Image = fs.readFileSync(imagePath, { encoding: 'base64' });
 
-    const roboflowUrl = `https://serverless.roboflow.com/ai-removals-roboflow/2?api_key=${process.env.ROBOFLOW_API_KEY}`;
-
     const roboflowRes = await axios.post(
-      roboflowUrl,
+      `https://detect.roboflow.com/ai-removals-roboflow/2?api_key=${process.env.ROBOFLOW_API_KEY}`,
       base64Image,
       {
         headers: {
@@ -38,10 +36,8 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
 
     res.json(roboflowRes.data);
   } catch (error) {
-    console.error('Feil fra Roboflow:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Image analysis failed', details: error.response?.data || error.message });
-  } finally {
-    fs.unlink(imagePath, () => {}); // rydder opp opplastet fil
+    console.error('Feil fra Roboflow:', error.message);
+    res.status(500).json({ error: 'Image analysis failed' });
   }
 });
 
