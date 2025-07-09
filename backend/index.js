@@ -12,12 +12,15 @@ const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
+// Konfigurer multer til å lagre opplastede filer i "uploads" mappen
 const upload = multer({ dest: 'uploads/' });
 
+// Test-endepunkt
 app.get('/', (req, res) => {
   res.send('AI Survey Backend is running');
 });
 
+// Analyse-endepunkt
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
   const imagePath = req.file.path;
 
@@ -31,11 +34,11 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       { headers: formData.getHeaders() }
     );
 
-    const predictions = roboflowRes.data.predictions.map(p => p.class);
-    res.json({ objects: predictions });
+    // Send JSON-resultatet tilbake til frontend eller curl
+    res.json(roboflowRes.data);
   } catch (err) {
-    console.error('Roboflow error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Image analysis failed' });
+    console.error("Roboflow-feil:", err.message);
+    res.status(500).json({ error: "Klarte ikke å analysere bildet." });
   }
 });
 
