@@ -25,7 +25,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     const base64Image = fs.readFileSync(imagePath, { encoding: 'base64' });
 
     const roboflowRes = await axios.post(
-      `https://infer.roboflow.com/ai-removals-roboflow/2?api_key=${process.env.ROBOFLOW_API_KEY}`,
+      `https://infer.roboflow.com/ai-removals-roboflow/2?api_key=${process.env.ROBOFLOW_API_KEY=o3WdaTWO4nd5tH71DoXz}`,
       base64Image,
       {
         headers: {
