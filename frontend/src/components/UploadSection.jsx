@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React, { useState } from 'react';
+import axios from 'axios';
 
 export default function AIMovingEstimator() {
   const [file, setFile] = useState(null);
@@ -23,46 +23,43 @@ export default function AIMovingEstimator() {
     setError(null);
 
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append('image', file);
 
     try {
-      const response = await axios.post("http://localhost:8080/api/analyze", formData, {
+      const response = await axios.post('http://localhost:8080/api/analyze', formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
       });
 
       const predictions = response.data.predictions || [];
-      const parsed = predictions.map((p) => `${p.class} (${Math.round(p.confidence * 100)}%)`);
-      setResult(parsed);
+      setResult(predictions);
     } catch (err) {
-      console.error("Image analysis failed:", err);
-      setError("Failed to analyze image.");
+      console.error('Feil ved analyse:', err.message);
+      setError('Failed to analyze image.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <input type="file" accept="image/*" onChange={handleFileChange} />
-      {previewUrl && <img src={previewUrl} alt="Preview" className="max-w-md rounded-lg shadow" />}
+    <div className="text-center mt-8">
+      <input type="file" onChange={handleFileChange} className="mb-4" />
+      {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto mb-4 max-w-md" />}
       <button
         onClick={handleSubmit}
-        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
         disabled={loading}
+        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
       >
-        {loading ? "Analyzing..." : "Analyze"}
+        {loading ? 'Analyzing...' : 'Analyze'}
       </button>
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
       {result && (
-        <div className="mt-4 text-center">
-          <h3 className="text-lg font-semibold">Detected Items:</h3>
-          <ul>
-            {result.map((item, index) => (
-              <li key={index} className="text-gray-700">{item}</li>
-            ))}
-          </ul>
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold">Results:</h3>
+          <pre className="text-left bg-gray-100 p-2 mt-2 rounded">
+            {JSON.stringify(result, null, 2)}
+          </pre>
         </div>
       )}
     </div>
