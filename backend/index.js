@@ -3,7 +3,6 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const axios = require('axios');
-const FormData = require('form-data');
 const path = require('path');
 
 const app = express();
@@ -15,48 +14,31 @@ app.use(express.json());
 const upload = multer({ dest: 'uploads/' });
 
 app.get('/', (req, res) => {
-  res.send('✅ Backend kjører.');
+  res.send('AI Survey Backend is running');
 });
 
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
-  console.log('📥 Mottatt POST /api/analyze');
-
-  if (!req.file) {
-    console.error('❌ Ingen fil mottatt i req.file');
-    return res.status(400).json({ error: 'Ingen fil ble lastet opp.' });
-  }
-
   const imagePath = req.file.path;
-  console.log('📂 Bildesti mottatt:', imagePath);
-
-  const formData = new FormData();
-  formData.append('file', fs.createReadStream(imagePath));
-
   try {
-    console.log('⏳ Ringer Roboflow...');
+    const base64Image = fs.readFileSync(imagePath, { encoding: 'base64' });
+
     const roboflowRes = await axios.post(
-      'https://detect.roboflow.com/ai-removals-roboflow/2?api_key=3WdaTWO4nd5tH71DoXz',
-      formData,
+      'https://serverless.roboflow.com/ai-removals-roboflow/2?api_key=o3WdaTW04nd5tH71DoXz',
+      base64Image,
       {
-        headers: formData.getHeaders(),
-        timeout: 15000
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       }
     );
-    console.log('✅ Roboflow ferdig');
+
     res.json(roboflowRes.data);
-  } catch (err) {
-    console.error('❌ Roboflow-feil:', err.message);
-    if (err.response) {
-      console.error('↩️ Feil fra Roboflow:', err.response.status, err.response.data);
-      res.status(500).json({ error: 'Roboflow feilet', details: err.response.data });
-    } else {
-      res.status(500).json({ error: 'Intern feil', details: err.message });
-    }
-  } finally {
-    fs.unlink(imagePath, () => {});
+  } catch (error) {
+    console.error('Feil fra Roboflow:', error.message);
+    res.status(500).json({ error: 'Image analysis failed' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
