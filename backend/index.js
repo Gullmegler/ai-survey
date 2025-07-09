@@ -31,13 +31,16 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       { headers: formData.getHeaders() }
     );
 
+    console.log("✅ Roboflow response:", roboflowRes.data);
+
     const predictions = roboflowRes.data.predictions.map(p => p.class);
     res.json({ objects: predictions });
+
   } catch (err) {
-    console.error('Roboflow error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Image analysis failed' });
+    console.error("❌ Roboflow error:", err?.response?.data || err.message);
+    res.status(500).json({ error: 'Image analysis failed', details: err?.response?.data || err.message });
   } finally {
-    fs.unlink(imagePath, () => {}); // clean up temp file
+    fs.unlink(imagePath, () => {}); // rydder opp
   }
 });
 
