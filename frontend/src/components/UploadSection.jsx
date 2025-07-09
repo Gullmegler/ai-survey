@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from "react";
+import axios from "axios";
 
 export default function AIMovingEstimator() {
   const [file, setFile] = useState(null);
@@ -10,8 +8,8 @@ export default function AIMovingEstimator() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleFileChange = (event) => {
-    const uploadedFile = event.target.files[0];
+  const handleFileChange = (e) => {
+    const uploadedFile = e.target.files[0];
     setFile(uploadedFile);
     setPreviewUrl(URL.createObjectURL(uploadedFile));
     setResult(null);
@@ -24,60 +22,49 @@ export default function AIMovingEstimator() {
     setLoading(true);
     setError(null);
 
-    const reader = new FileReader();
+    const formData = new FormData();
+    formData.append("image", file);
 
-    reader.onloadend = async () => {
-      const base64Image = reader.result.split(',')[1]; // Fjerner metadata
+    try {
+      const response = await axios.post("http://localhost:8080/api/analyze", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
-      try {
-        const response = await axios.post(
-          'http://localhost:9001/infer/workflows/test-vqiue/detect-count-and-visualize-4',
-          {
-            api_key: 'o3WdaTWO4nd5tH71DoXz', // bytt til env-variabel i prod
-            inputs: {
-              image: {
-                type: 'base64',
-                value: base64Image,
-              },
-            },
-          }
-        );
-
-        const predictions = response.data?.predictions || [];
-        const objectClasses = predictions.map((p) => p.class);
-        setResult(objectClasses);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to analyze image.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    reader.readAsDataURL(file);
+      const predictions = response.data.predictions || [];
+      const parsed = predictions.map((p) => `${p.class} (${Math.round(p.confidence * 100)}%)`);
+      setResult(parsed);
+    } catch (err) {
+      console.error("Image analysis failed:", err);
+      setError("Failed to analyze image.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Card className="p-4 w-full max-w-xl mx-auto text-center">
-      <CardContent>
-        <h2 className="text-xl font-semibold mb-2">AI-Powered Moving Survey</h2>
-        <input type="file" accept="image/*" onChange={handleFileChange} className="mb-2" />
-        {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto mb-2 max-h-96" />}
-        <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Analyzing...' : 'Analyze'}
-        </Button>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
-        {result && (
-          <div className="mt-4 text-left">
-            <h3 className="font-bold">Detected Objects:</h3>
-            <ul className="list-disc list-inside">
-              {result.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col items-center space-y-4">
+      <input type="file" accept="image/*" onChange={handleFileChange} />
+      {previewUrl && <img src={previewUrl} alt="Preview" className="max-w-md rounded-lg shadow" />}
+      <button
+        onClick={handleSubmit}
+        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+        disabled={loading}
+      >
+        {loading ? "Analyzing..." : "Analyze"}
+      </button>
+      {error && <p className="text-red-600">{error}</p>}
+      {result && (
+        <div className="mt-4 text-center">
+          <h3 className="text-lg font-semibold">Detected Items:</h3>
+          <ul>
+            {result.map((item, index) => (
+              <li key={index} className="text-gray-700">{item}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
