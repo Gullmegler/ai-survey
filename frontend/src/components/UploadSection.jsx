@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -24,15 +23,35 @@ export default function AIMovingEstimator() {
     setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('image', file); // matches backend field name
-
     try {
-      const response = await axios.post('http://localhost:8080/api/analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setResult(response.data.objects);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result.split(',')[1]; // fjerner data:image/...;base64,
+
+        const response = await fetch('https://serverless.roboflow.com/infer/workflows/test-vqiue/detect-count-and-visualize-4', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            api_key: 'o3WdaTWO4nd5tH71DoXz', // <-- vurder å hente fra .env i produksjon
+            inputs: {
+              image: { type: 'base64', value: base64Image }
+            }
+          }),
+        });
+
+        const data = await response.json();
+        console.log(data);
+
+        // henter "predictions" array hvis tilgjengelig
+        const detections = data?.predictions?.predictions || [];
+        setResult(detections);
+      };
+
+      reader.readAsDataURL(file);
     } catch (err) {
+      console.error(err);
       setError('Failed to analyze image.');
     } finally {
       setLoading(false);
@@ -54,7 +73,9 @@ export default function AIMovingEstimator() {
             <h3 className="font-bold">Detected Objects:</h3>
             <ul className="list-disc list-inside">
               {result.map((item, index) => (
-                <li key={index}>{item}</li>
+                <li key={index}>
+                  {item.class} – confidence: {(item.confidence * 100).toFixed(1)}%
+                </li>
               ))}
             </ul>
           </div>
