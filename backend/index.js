@@ -14,7 +14,6 @@ app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
-// Test endpoint
 app.get('/', (req, res) => {
   res.send('AI Survey Backend is running');
 });
@@ -26,7 +25,7 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
     return res.status(400).json({ error: 'Image not provided or failed to upload.' });
   }
 
-  console.log(`➡️ Fil mottatt: ${imagePath}`);
+  console.log(`📸 Mottatt bilde: ${imagePath}`);
 
   const formData = new FormData();
   formData.append('file', fs.createReadStream(imagePath));
@@ -37,26 +36,30 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       formData,
       {
         headers: formData.getHeaders(),
-        timeout: 10000 // 10 sek timeout
+        timeout: 10000 // 10 sekunder timeout
       }
     );
 
-    console.log('✅ Roboflow-response mottatt');
+    console.log('✅ Svar mottatt fra Roboflow');
     res.json(roboflowRes.data);
   } catch (err) {
-    console.error('❌ Roboflow-anrop feilet:');
+    console.error('❌ Roboflow-feil:', err.message);
+
     if (err.response) {
-      console.error('Status:', err.response.status);
-      console.error('Data:', err.response.data);
-      res.status(500).json({
-        error: 'Feil ved Roboflow-analyse',
+      res.status(err.response.status).json({
+        error: 'Roboflow feilet',
         status: err.response.status,
-        response: err.response.data
+        message: err.response.data
       });
+    } else if (err.code === 'ECONNABORTED') {
+      res.status(504).json({ error: 'Tidsavbrudd – Roboflow svarte ikke i tide' });
     } else {
-      console.error('Feilmelding:', err.message);
       res.status(500).json({ error: 'Intern serverfeil', details: err.message });
     }
+  } finally {
+    fs.unlink(imagePath, () => {
+      console.log(`🧹 Midlertidig fil slettet: ${imagePath}`);
+    });
   }
 });
 
