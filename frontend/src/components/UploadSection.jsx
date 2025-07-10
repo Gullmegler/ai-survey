@@ -26,10 +26,7 @@ export default function UploadSection() {
     try {
       const response = await axios({
         method: "POST",
-        url: "https://detect.roboflow.com/ai-removals-roboflow/2",
-        params: {
-          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2"
-        },
+        url: `https://detect.roboflow.com/ai-removals-roboflow/2?api_key=rf_TltRUahajLP6EsczNRGh4ecYCVy2`,
         data: formData,
         headers: {
           "Content-Type": "multipart/form-data"
