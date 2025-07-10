@@ -1,0 +1,19 @@
+{
+  "name": "ai-survey-backend",
+  "version": "1.0.0",
+  "description": "Backend for AI Survey, håndterer videoanalyse via Roboflow",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "roboflow": "^1.1.1"
+  }
+}
