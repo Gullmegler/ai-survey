@@ -26,11 +26,11 @@ export default function UploadSection() {
     try {
       const response = await axios({
         method: "POST",
-        url: `https://detect.roboflow.com/ai-removals-roboflow/2?api_key=rf_TltRUahajLP6EsczNRGh4ecYCVy2`,
+        url: "https://detect.roboflow.com/ai-removals-roboflow/2?api_key=o3WdaTW04nd5tH71DoXz",
         data: formData,
         headers: {
-          "Content-Type": "multipart/form-data"
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       setResults(response.data.predictions || []);
@@ -52,15 +52,15 @@ export default function UploadSection() {
       )}
       <button
         onClick={handleAnalyze}
-        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition"
       >
         Analyze
       </button>
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {error && <p className="text-red-500 mt-4">{error}</p>}
       {results.length > 0 && (
         <div className="mt-4">
-          <h3>Analysis Results:</h3>
-          <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
+          <h3>Results:</h3>
+          <pre>{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
     </div>
