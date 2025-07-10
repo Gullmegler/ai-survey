@@ -20,29 +20,33 @@ export default function UploadSection() {
   const handleAnalyze = async () => {
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64data = reader.result.split(",")[1];
 
-    try {
-      const response = await axios({
-        method: "POST",
-        url: "https://detect.roboflow.com/ai-removals-roboflow/2",
-        params: {
-          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2"
-        },
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      });
+      try {
+        const response = await axios({
+          method: "POST",
+          url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
+          params: {
+            api_key: "o3WdaTW04nd5tH71DoXz"
+          },
+          data: base64data,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        });
 
-      setResults(response.data.predictions || []);
-      setError("");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to analyze image.");
-      setResults([]);
-    }
+        setResults(response.data.predictions || []);
+        setError("");
+      } catch (err) {
+        console.error(err);
+        setError("Failed to analyze image.");
+        setResults([]);
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -55,17 +59,14 @@ export default function UploadSection() {
       )}
       <button
         onClick={handleAnalyze}
-        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
+        className="bg-orange-500 text-white px-4 py-2 rounded"
       >
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       {results.length > 0 && (
         <div className="mt-4">
-          <h3 className="font-bold">Results:</h3>
-          <pre className="text-left bg-gray-100 p-4 rounded">
-            {JSON.stringify(results, null, 2)}
-          </pre>
+          <pre>{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
     </div>
