@@ -1,35 +1,32 @@
 const express = require("express");
-const fileUpload = require("express-fileupload");
+const multer = require("multer");
 const cors = require("cors");
+const { Roboflow } = require("roboflow");
 require("dotenv").config();
-const { Inference } = require("@roboflow/inference");
 
 const app = express();
+const upload = multer({ dest: "uploads/" });
 app.use(cors());
-app.use(fileUpload());
+const PORT = 8080;
 
-const inference = new Inference(process.env.ROBOFLOW_API_KEY);
+const rf = new Roboflow({ apiKey: process.env.ROBOFLOW_API_KEY });
 
-app.post("/analyze", async (req, res) => {
-    try {
-        if (!req.files || !req.files.file) {
-            return res.status(400).json({ error: "No file uploaded" });
-        }
-
-        const fileBuffer = req.files.file.data;
-
-        const result = await inference.predict(fileBuffer, {
-            model: "ai-removals-roboflow/2",
-            confidence: 0.5
-        });
-
-        res.json(result);
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: "Something went wrong" });
-    }
+app.post("/analyze-video", upload.single("video"), async (req, res) => {
+  try {
+    const project = await rf.workspace().project("ai-removals-roboflow");
+    const model = await project.version(2).model;
+    const job = await model.predictVideo(req.file.path, {
+      fps: 5,
+      confidence: 0.5,
+      overlap: 0.2,
+    });
+    res.json(job);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Video analysis failed" });
+  }
 });
 
-app.listen(8080, () => {
-    console.log("Backend server running on port 8080");
+app.listen(PORT, () => {
+  console.log(`Backend server running on port ${PORT}`);
 });
