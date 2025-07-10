@@ -1,25 +1,19 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-function UploadSection() {
+export default function UploadSection() {
   const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFile(selectedFile);
+    const file = e.target.files[0];
+    if (!file) return;
+    setFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
     setResults([]);
     setError("");
-
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
   };
 
   const handleAnalyze = async () => {
@@ -33,7 +27,7 @@ function UploadSection() {
         method: "POST",
         url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
         params: {
-          api_key: "FgcbZsS7lpWpuzyW5kG9"
+          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCYv2"
         },
         data: formData,
         headers: {
@@ -58,21 +52,10 @@ function UploadSection() {
           <img src={previewUrl} alt="Preview" className="mx-auto max-h-96" />
         </div>
       )}
-      <button
-        onClick={handleAnalyze}
-        className="bg-orange-500 text-white px-4 py-2 rounded"
-      >
+      <button onClick={handleAnalyze} className="bg-orange-500 text-white px-4 py-2 rounded">
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
-      {results.length > 0 && (
-        <div className="mt-4">
-          <h3>Results:</h3>
-          <pre>{JSON.stringify(results, null, 2)}</pre>
-        </div>
-      )}
     </div>
   );
 }
-
-export default UploadSection;
