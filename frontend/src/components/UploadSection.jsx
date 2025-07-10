@@ -20,33 +20,29 @@ export default function UploadSection() {
   const handleAnalyze = async () => {
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64data = reader.result.split(",")[1];
+    const formData = new FormData();
+    formData.append("file", file);
 
-      try {
-        const response = await axios({
-          method: "POST",
-          url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
-          params: {
-            api_key: "o3WdaTW04nd5tH71DoXz"
-          },
-          data: base64data,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        });
+    try {
+      const response = await axios({
+        method: "POST",
+        url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
+        params: {
+          api_key: "o3WdaTW04nd5tH71DoXz"
+        },
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
 
-        setResults(response.data.predictions || []);
-        setError("");
-      } catch (err) {
-        console.error(err);
-        setError("Failed to analyze image.");
-        setResults([]);
-      }
-    };
-
-    reader.readAsDataURL(file);
+      setResults(response.data.predictions || []);
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setError("Failed to analyze image.");
+      setResults([]);
+    }
   };
 
   return (
@@ -59,14 +55,15 @@ export default function UploadSection() {
       )}
       <button
         onClick={handleAnalyze}
-        className="bg-orange-500 text-white px-4 py-2 rounded"
+        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
       >
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       {results.length > 0 && (
         <div className="mt-4">
-          <pre>{JSON.stringify(results, null, 2)}</pre>
+          <h2 className="text-lg font-semibold">Results</h2>
+          <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
     </div>
