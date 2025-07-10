@@ -8,9 +8,9 @@ function UploadSection() {
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const newFile = e.target.files[0];
-    setFile(newFile);
-    setPreviewUrl(URL.createObjectURL(newFile));
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setPreviewUrl(URL.createObjectURL(selectedFile));
     setResults([]);
     setError("");
   };
@@ -18,49 +18,49 @@ function UploadSection() {
   const handleAnalyze = async () => {
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const base64Image = reader.result.split(",")[1];
+        const response = await axios({
+          method: "POST",
+          url: "https://detect.roboflow.com/ai-removals-roboflow/2",
+          params: {
+            api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2", // Din publishable API key
+          },
+          data: base64Image,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        });
 
-    try {
-      const response = await axios({
-        method: "POST",
-        url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
-        params: {
-          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2",
-        },
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+        console.log("Response:", response.data);
+        setResults(response.data.predictions || []);
+        setError("");
+      } catch (err) {
+        console.error(err);
+        setError("Failed to analyze image.");
+        setResults([]);
+      }
+    };
 
-      setResults(response.data.predictions || []);
-      setError("");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to analyze image.");
-      setResults([]);
-    }
+    reader.readAsDataURL(file);
   };
 
   return (
     <div className="text-center my-8">
       <input type="file" onChange={handleFileChange} />
-      {previewUrl && (
-        <div className="flex justify-center mt-4">
-          <img src={previewUrl} alt="Preview" className="max-w-md" />
-        </div>
-      )}
+      {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto my-4 max-h-64" />}
       <button
+        className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
         onClick={handleAnalyze}
-        className="bg-orange-500 text-white px-4 py-2 mt-4 rounded hover:bg-orange-600"
       >
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
       {results.length > 0 && (
         <div className="mt-4">
-          <h3 className="font-semibold">Results:</h3>
+          <h3>Results:</h3>
           <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
