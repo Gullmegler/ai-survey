@@ -26,7 +26,7 @@ const UploadSection = () => {
           method: "POST",
           url: "https://detect.roboflow.com/ai-removals-roboflow/2",
           params: {
-            api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2", // publiserbar API-key (kun for bilde)
+            api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2", // publiserbar key
           },
           data: base64Image,
           headers: {
