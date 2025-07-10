@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-export default function UploadSection() {
+function UploadSection() {
   const [file, setFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    const newFile = e.target.files[0];
+    setFile(newFile);
+    setPreviewUrl(URL.createObjectURL(newFile));
     setResults([]);
     setError("");
   };
@@ -27,12 +26,12 @@ export default function UploadSection() {
         method: "POST",
         url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
         params: {
-          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCYv2"
+          api_key: "rf_TltRUahajLP6EsczNRGh4ecYCVy2",
         },
         data: formData,
         headers: {
-          "Content-Type": "multipart/form-data"
-        }
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       setResults(response.data.predictions || []);
@@ -48,14 +47,25 @@ export default function UploadSection() {
     <div className="text-center my-8">
       <input type="file" onChange={handleFileChange} />
       {previewUrl && (
-        <div className="my-4">
-          <img src={previewUrl} alt="Preview" className="mx-auto max-h-96" />
+        <div className="flex justify-center mt-4">
+          <img src={previewUrl} alt="Preview" className="max-w-md" />
         </div>
       )}
-      <button onClick={handleAnalyze} className="bg-orange-500 text-white px-4 py-2 rounded">
+      <button
+        onClick={handleAnalyze}
+        className="bg-orange-500 text-white px-4 py-2 mt-4 rounded hover:bg-orange-600"
+      >
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
+      {results.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">Results:</h3>
+          <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
+        </div>
+      )}
     </div>
   );
 }
+
+export default UploadSection;
