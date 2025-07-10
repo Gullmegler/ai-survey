@@ -36,69 +36,31 @@ export default function UploadSection() {
         }
       });
 
-      const predictions = response.data.predictions;
-      setResults(predictions);
+      setResults(response.data.predictions || []);
       setError("");
     } catch (err) {
+      console.error(err);
       setError("Failed to analyze image.");
+      setResults([]);
     }
   };
 
-  const countByClass = results.reduce((acc, prediction) => {
-    acc[prediction.class] = (acc[prediction.class] || 0) + 1;
-    return acc;
-  }, {});
-
   return (
-    <div className="flex flex-col items-center">
+    <div>
       <input type="file" onChange={handleFileChange} />
       {previewUrl && (
-        <div className="my-4 flex justify-center">
-          <div style={{ position: "relative", display: "inline-block" }}>
-            <img src={previewUrl} alt="Preview" />
-            {results.map((prediction, index) => (
-              <div
-                key={index}
-                style={{
-                  position: "absolute",
-                  border: "2px solid orange",
-                  left: prediction.x - prediction.width / 2,
-                  top: prediction.y - prediction.height / 2,
-                  width: prediction.width,
-                  height: prediction.height,
-                  color: "orange",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                  backgroundColor: "rgba(0, 0, 0, 0.5)"
-                }}
-              >
-                {`${prediction.class} (${Math.round(prediction.confidence * 100)}%)`}
-              </div>
-            ))}
-          </div>
+        <div>
+          <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%" }} />
+          <button onClick={handleAnalyze}>Analyze</button>
         </div>
       )}
-      {file && (
-        <button
-          onClick={handleAnalyze}
-          className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-        >
-          Analyze
-        </button>
-      )}
-      {Object.keys(countByClass).length > 0 && (
-        <div className="mt-6 text-center">
-          <h3 className="font-bold mb-2">Detected items:</h3>
-          <ul className="list-disc list-inside">
-            {Object.entries(countByClass).map(([className, count], index) => (
-              <li key={index}>
-                {className} — {count} stk
-              </li>
-            ))}
-          </ul>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {results.length > 0 && (
+        <div>
+          <h3>Results:</h3>
+          <pre>{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
-      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }
