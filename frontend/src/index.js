@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
 import ReactDOM from "react-dom";
+import axios from "axios";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -34,7 +34,7 @@ function App() {
             "Content-Type": "application/x-www-form-urlencoded",
           },
         });
-        console.log("Response:", response.data);
+        console.log("Image Response:", response.data);
         setResults(response.data.predictions || []);
         setError("");
       } catch (err) {
@@ -48,11 +48,11 @@ function App() {
 
   return (
     <div className="text-center my-8">
-      <h1>AI Image Analyzer</h1>
+      <h1>AI Analyzer (Image)</h1>
       <input type="file" onChange={handleFileChange} />
       {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto my-4" />}
       <button onClick={handleAnalyze} style={{ background: "orange", color: "white", padding: "10px 20px" }}>
-        Analyze
+        Analyze Image
       </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
       <div>
@@ -62,4 +62,4 @@ function App() {
   );
 }
 
-ReactDOM.render(<App />, document.get
+ReactDOM.render(<App />, document.getElementById("root"));
