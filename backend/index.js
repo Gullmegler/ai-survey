@@ -1,32 +1,39 @@
-const express = require("express");
-const multer = require("multer");
-const cors = require("cors");
-const { Roboflow } = require("roboflow");
 require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const Roboflow = require("roboflow");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
+
 app.use(cors());
-const PORT = 8080;
 
 const rf = new Roboflow({ apiKey: process.env.ROBOFLOW_API_KEY });
+const project = rf.workspace().project("ai-removals-roboflow");
+const model = project.version(2).model;
 
-app.post("/analyze-video", upload.single("video"), async (req, res) => {
+app.post("/analyze-video", upload.single("file"), async (req, res) => {
   try {
-    const project = await rf.workspace().project("ai-removals-roboflow");
-    const model = await project.version(2).model;
-    const job = await model.predictVideo(req.file.path, {
+    const videoPath = req.file.path;
+
+    const result = await model.predictVideo(videoPath, {
       fps: 5,
-      confidence: 0.5,
-      overlap: 0.2,
+      prediction_type: "batch"
     });
-    res.json(job);
+
+    // Slett lokalt lagret video
+    fs.unlinkSync(videoPath);
+
+    res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Video analysis failed" });
+    res.status(500).send("Failed to analyze video");
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend server running on port ${PORT}`);
+app.listen(8080, () => {
+  console.log("Backend server running on port 8080");
 });
