@@ -8,40 +8,41 @@ function UploadSection() {
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const uploadedFile = e.target.files[0];
-    if (uploadedFile) {
-      setFile(uploadedFile);
-      setPreviewUrl(URL.createObjectURL(uploadedFile));
-      setResults([]);
-      setError("");
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setResults([]);
+    setError("");
+
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(selectedFile);
     }
   };
 
   const handleAnalyze = async () => {
     if (!file) return;
 
+    const formData = new FormData();
+    formData.append("file", file);
+
     try {
-      // Les fil og konverter til base64
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result.split(",")[1];
+      const response = await axios({
+        method: "POST",
+        url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
+        params: {
+          api_key: "FgcbZsS7lpWpuzyW5kG9"
+        },
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
 
-        const response = await axios({
-          method: "POST",
-          url: "https://serverless.roboflow.com/ai-removals-roboflow/2",
-          params: {
-            api_key: "o3WdaTWO4nd5tH71DoXz"
-          },
-          data: base64String,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        });
-
-        setResults(response.data.predictions || []);
-        setError("");
-      };
-      reader.readAsDataURL(file);
+      setResults(response.data.predictions || []);
+      setError("");
     } catch (err) {
       console.error(err);
       setError("Failed to analyze image.");
@@ -59,7 +60,7 @@ function UploadSection() {
       )}
       <button
         onClick={handleAnalyze}
-        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
+        className="bg-orange-500 text-white px-4 py-2 rounded"
       >
         Analyze
       </button>
@@ -67,7 +68,7 @@ function UploadSection() {
       {results.length > 0 && (
         <div className="mt-4">
           <h3>Results:</h3>
-          <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
+          <pre>{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
     </div>
