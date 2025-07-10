@@ -46,19 +46,20 @@ export default function UploadSection() {
   };
 
   return (
-    <div>
-      <input type="file" onChange={handleFileChange} />
-      {previewUrl && (
-        <div>
-          <img src={previewUrl} alt="Preview" style={{ maxWidth: "100%" }} />
-          <button onClick={handleAnalyze}>Analyze</button>
-        </div>
-      )}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="flex flex-col items-center mt-8">
+      <input type="file" onChange={handleFileChange} className="mb-4" />
+      {previewUrl && <img src={previewUrl} alt="Preview" className="w-1/2 mb-4 rounded shadow" />}
+      <button
+        onClick={handleAnalyze}
+        className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600"
+      >
+        Analyze
+      </button>
+      {error && <p className="text-red-500 mt-2">{error}</p>}
       {results.length > 0 && (
-        <div>
+        <div className="mt-4">
           <h3>Results:</h3>
-          <pre>{JSON.stringify(results, null, 2)}</pre>
+          <pre className="text-left bg-gray-100 p-4 rounded">{JSON.stringify(results, null, 2)}</pre>
         </div>
       )}
     </div>
