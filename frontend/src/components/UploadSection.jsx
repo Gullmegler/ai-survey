@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const UploadSection = () => {
+function UploadSection() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
+    const uploadedFile = e.target.files[0];
+    if (uploadedFile) {
+      setFile(uploadedFile);
+      setPreviewUrl(URL.createObjectURL(uploadedFile));
       setResults([]);
       setError("");
     }
@@ -20,11 +20,11 @@ const UploadSection = () => {
   const handleAnalyze = async () => {
     if (!file) return;
 
-    const reader = new FileReader();
-
-    reader.onloadend = async () => {
-      try {
-        const base64String = reader.result.split(",")[1]; // fjerner data:image/... header
+    try {
+      // Les fil og konverter til base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result.split(",")[1];
 
         const response = await axios({
           method: "POST",
@@ -40,14 +40,13 @@ const UploadSection = () => {
 
         setResults(response.data.predictions || []);
         setError("");
-      } catch (err) {
-        console.error(err);
-        setError("Failed to analyze image.");
-        setResults([]);
-      }
-    };
-
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to analyze image.");
+      setResults([]);
+    }
   };
 
   return (
@@ -60,14 +59,19 @@ const UploadSection = () => {
       )}
       <button
         onClick={handleAnalyze}
-        className="bg-orange-500 text-white px-4 py-2 rounded"
+        className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded"
       >
         Analyze
       </button>
       {error && <p className="text-red-500 mt-2">{error}</p>}
-      {/* Du kan også vise results her hvis du vil */}
+      {results.length > 0 && (
+        <div className="mt-4">
+          <h3>Results:</h3>
+          <pre className="text-left">{JSON.stringify(results, null, 2)}</pre>
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default UploadSection;
