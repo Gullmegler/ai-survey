@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-function UploadSection() {
+const UploadSection = () => {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [results, setResults] = useState([]);
@@ -10,28 +10,34 @@ function UploadSection() {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
-    setPreviewUrl(URL.createObjectURL(selectedFile));
-    setResults([]);
-    setError("");
+
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl("");
+    }
   };
 
-  const handleImageAnalyze = async () => {
+  const handleAnalyzeImage = async () => {
     if (!file) return;
+
     const reader = new FileReader();
-    reader.onload = async () => {
+    reader.onloadend = async () => {
       try {
         const base64Image = reader.result.split(",")[1];
         const response = await axios({
           method: "POST",
           url: "https://detect.roboflow.com/ai-removals-roboflow/2",
           params: {
-            api_key: "DIN_API_KEY_HER", // Bytt til din
+            api_key: process.env.REACT_APP_ROBOFLOW_API_KEY,
           },
           data: base64Image,
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
         });
+
         setResults(response.data.predictions || []);
         setError("");
       } catch (err) {
@@ -43,10 +49,12 @@ function UploadSection() {
     reader.readAsDataURL(file);
   };
 
-  const handleVideoAnalyze = async () => {
+  const handleAnalyzeVideo = async () => {
     if (!file) return;
+
     const formData = new FormData();
     formData.append("file", file);
+
     try {
       const response = await axios.post("http://localhost:8080/analyze-video", formData, {
         headers: {
@@ -63,26 +71,26 @@ function UploadSection() {
   };
 
   return (
-    <div className="text-center my-8">
+    <div className="text-center mt-8">
       <input type="file" onChange={handleFileChange} />
-      {previewUrl && <img src={previewUrl} alt="preview" className="mx-auto my-4 max-h-64" />}
-      <div className="space-x-4">
-        <button
-          onClick={handleImageAnalyze}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
-        >
+      {previewUrl && <img src={previewUrl} alt="Preview" className="mx-auto mt-4 max-h-64" />}
+      <div className="flex justify-center space-x-4 mt-4">
+        <button onClick={handleAnalyzeImage} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
           Analyze Image
         </button>
-        <button
-          onClick={handleVideoAnalyze}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
+        <button onClick={handleAnalyzeVideo} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
           Analyze Video
         </button>
       </div>
-      {error && <p className="text-red-500 mt-4">{error}</p>}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+      {results.length > 0 && (
+        <div className="mt-4 text-left mx-auto max-w-xl">
+          <h3>Results:</h3>
+          <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(results, null, 2)}</pre>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default UploadSection;
