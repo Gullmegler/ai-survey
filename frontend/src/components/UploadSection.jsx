@@ -25,7 +25,7 @@ const UploadSection = () => {
           method: "POST",
           url: "https://detect.roboflow.com/ai-removals-roboflow/2",
           params: {
-            api_key: "rf_TLtRUahajLP6EsczNRGh4ecYCVy2", // ← Din nøkkel
+            api_key: "rf_TLtRUahajLP6EsczNRGh4ecYCVy2",
           },
           data: base64Image,
           headers: {
