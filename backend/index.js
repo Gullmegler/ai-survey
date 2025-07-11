@@ -4,14 +4,14 @@ const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const Roboflow = require("roboflow");
+const roboflow = require("roboflow");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 
-const rf = new Roboflow({ apiKey: process.env.ROBOFLOW_API_KEY });
+const rf = roboflow({ apiKey: process.env.ROBOFLOW_API_KEY });
 const project = rf.workspace().project("ai-removals-roboflow");
 const model = project.version(2).model;
 
