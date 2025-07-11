@@ -1,39 +1,40 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const multer = require("multer");
-const fs = require("fs");
-const axios = require("axios");
-const FormData = require("form-data");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import axios from "axios";
+
+dotenv.config();
 
 const app = express();
-const upload = multer({ dest: "uploads/" });
+const PORT = 8080;
 
 app.use(cors());
+app.use(express.json({ limit: "10mb" }));
 
-app.post("/analyze-video", upload.single("file"), async (req, res) => {
+app.post("/analyze-image", async (req, res) => {
   try {
-    const videoPath = req.file.path;
-
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(videoPath));
+    const base64Image = req.body.image;
+    const apiKey = process.env.ROBOFLOW_API_KEY;
 
     const response = await axios({
-      method: "post",
-      url: `https://detect.roboflow.com/ai-removals-roboflow/2?api_key=${process.env.ROBOFLOW_API_KEY}`,
-      headers: formData.getHeaders(),
-      data: formData
+      method: "POST",
+      url: "https://detect.roboflow.com/ai-removals-roboflow/2",
+      params: {
+        api_key: apiKey,
+      },
+      data: base64Image,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
     });
-
-    fs.unlinkSync(videoPath);
 
     res.json(response.data);
   } catch (error) {
-    console.error(error.response?.data || error);
-    res.status(500).send("Failed to analyze video");
+    console.error(error);
+    res.status(500).json({ message: "Failed to analyze image" });
   }
 });
 
-app.listen(8080, () => {
-  console.log("Backend server running on port 8080");
+app.listen(PORT, () => {
+  console.log(`Backend server running on port ${PORT}`);
 });
