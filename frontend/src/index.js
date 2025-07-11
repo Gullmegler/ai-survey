@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
+import "./index.css";
 
 function App() {
   const [file, setFile] = useState(null);
