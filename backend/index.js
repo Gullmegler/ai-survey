@@ -13,11 +13,8 @@ app.use(cors());
 app.post("/analyze-video", upload.single("file"), async (req, res) => {
   try {
     const videoPath = req.file.path;
-
-    // Les fil og konverter til base64
     const fileData = fs.readFileSync(videoPath, { encoding: "base64" });
 
-    // Send forespørsel til Roboflow
     const response = await axios({
       method: "POST",
       url: `https://detect.roboflow.com/ai-removals-roboflow/2`,
@@ -30,9 +27,7 @@ app.post("/analyze-video", upload.single("file"), async (req, res) => {
       }
     });
 
-    // Slett fil etter analyse
     fs.unlinkSync(videoPath);
-
     res.json(response.data);
   } catch (error) {
     console.error(error.response ? error.response.data : error.message);
