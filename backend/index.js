@@ -3,29 +3,30 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
-const path = require("path");
-const Roboflow = require("roboflow").default;
+const axios = require("axios");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 
-const rf = new Roboflow({ apiKey: process.env.ROBOFLOW_API_KEY });
-const project = rf.workspace().project("ai-removals-roboflow");
-const model = project.version(2).model;
-
 app.post("/analyze-video", upload.single("file"), async (req, res) => {
   try {
     const videoPath = req.file.path;
 
-    const result = await model.predictVideo(videoPath, {
-      fps: 5,
-      prediction_type: "batch"
+    // Last opp filen til Roboflow API
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(videoPath));
+
+    const roboflowResponse = await axios({
+      method: "post",
+      url: `https://detect.roboflow.com/YOUR_MODEL/2?api_key=${process.env.ROBOFLOW_API_KEY}`,
+      headers: formData.getHeaders(),
+      data: formData
     });
 
     fs.unlinkSync(videoPath);
-    res.json(result);
+    res.json(roboflowResponse.data);
   } catch (error) {
     console.error(error);
     res.status(500).send("Failed to analyze video");
