@@ -3,31 +3,39 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
-const path = require("path");
-const Roboflow = require("roboflow"); // ← stor R
+const axios = require("axios");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 
-const rf = new Roboflow({ apiKey: process.env.ROBOFLOW_API_KEY }); // ← stor R her
-const project = rf.workspace().project("ai-removals-roboflow");
-const model = project.version(2).model;
-
 app.post("/analyze-video", upload.single("file"), async (req, res) => {
   try {
     const videoPath = req.file.path;
 
-    const result = await model.predictVideo(videoPath, {
-      fps: 5,
-      prediction_type: "batch"
+    // Les fil og konverter til base64
+    const fileData = fs.readFileSync(videoPath, { encoding: "base64" });
+
+    // Send forespørsel til Roboflow
+    const response = await axios({
+      method: "POST",
+      url: `https://detect.roboflow.com/ai-removals-roboflow/2`,
+      params: {
+        api_key: process.env.ROBOFLOW_API_KEY
+      },
+      data: fileData,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
     });
 
+    // Slett fil etter analyse
     fs.unlinkSync(videoPath);
-    res.json(result);
+
+    res.json(response.data);
   } catch (error) {
-    console.error(error);
+    console.error(error.response ? error.response.data : error.message);
     res.status(500).send("Failed to analyze video");
   }
 });
